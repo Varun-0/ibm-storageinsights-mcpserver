@@ -73,9 +73,8 @@ async def fetch_token(
     Returns:
         Returns a short-lived token
     """
-    if (
-        si_tenant_id in token_cache
-        and token_cache[si_tenant_id].get("expiration") > time.time()
+    if si_tenant_id in token_cache and token_cache[si_tenant_id].get("expiration") > (
+        time.time() * 1000
     ):
         logger.info(f"Re-using existing token for tenant {si_tenant_id}")
         token = token_cache[si_tenant_id].get("token")
@@ -83,7 +82,12 @@ async def fetch_token(
         logger.info(f"Creating new token for tenant {si_tenant_id}")
         token = None
         url = f"{SI_BASE_URL}/tenants/{si_tenant_id}/token"
-        headers = {"x-api-key": f"{si_api_key}", "Content-Type": "application/json", "x-integration": "si-mcp", "x-integration-version": "v1"}
+        headers = {
+            "x-api-key": f"{si_api_key}",
+            "Content-Type": "application/json",
+            "x-integration": "si-mcp",
+            "x-integration-version": "v1",
+        }
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.post(url, headers=headers, timeout=30.0)
@@ -139,7 +143,12 @@ async def call_ibm_storageinsights_api(
     """Make a request to the API with proper error handling."""
     logger.info(f"Fetch the token for SI API invocation for tenant id {tenant_id}")
     token = await fetch_token(tenant_id, api_key, logger)
-    headers = {"x-api-token": f"{token}", "Content-Type": "application/json", "x-integration": "si-mcp", "x-integration-version": "v1"}
+    headers = {
+        "x-api-token": f"{token}",
+        "Content-Type": "application/json",
+        "x-integration": "si-mcp",
+        "x-integration-version": "v1",
+    }
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(
@@ -155,6 +164,3 @@ async def call_ibm_storageinsights_api(
             logger.error(f"Encountered error in API call. Error: {e}")
             raise e
     return result
-
-
-
